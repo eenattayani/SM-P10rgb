@@ -81,10 +81,10 @@ unsigned int durG = 25;
 //const char* ssid     = "cd-sg3";
 //const char* ssid     = "cd-sg4";
 
-const char* ssid     = "amp-sg1";
+//const char* ssid     = "amp-sg1";
 //const char* ssid     = "amp-sg2";
 //const char* ssid     = "amp-sg3";
-//const char* ssid     = "amp-sg4";
+const char* ssid     = "amp-sg4";
 
 //const char* ssid     = "ub-sg1";
 //const char* ssid     = "ub-sg2";
@@ -114,6 +114,9 @@ void setup() {
   pinMode(grePin, INPUT);
 
   Serial.begin(115200);
+  // wait for Serial to be ready
+  delay(50);
+  
   startup_wifi();
   
   matrix.addLayer(&backgroundLayer); 
@@ -150,9 +153,7 @@ void setup() {
 
 void startup_wifi()
 {
-  // wait for Serial to be ready
-  delay(50);
-
+  
   Serial.print("Setting AP (Access Point)...");
   WiFi.softAP(ssid, password);
 
@@ -375,6 +376,7 @@ void count_down()
       backgroundLayer.swapBuffers();
 
       cdR--;
+      if (cdR > 199) cdR = 199;
       if (cdR < 0) cdR = 0;
     } 
     else if(bacaIn[1] == 0) // yellow
@@ -391,12 +393,13 @@ void count_down()
       if ( hatiOn == false ) hatiOn = true; 
       
       if ( countG == 0 ) runTeks = 0;   //  agar running teks berpindah dari merah ke hijau
-                                      //  ada kasus traffic light hijau tapi running teks merah
+                                        //  ada kasus traffic light hijau tapi running teks merah
       font_angka();
       
       countG++;
       durG = countG;
-      
+
+      // tetapkan nilai durasi RED dan Reset nilai countR      
       cdR = durR - 1;
       countR = 0;
 
@@ -409,11 +412,21 @@ void count_down()
       backgroundLayer.swapBuffers();
 
       cdG--;
+      if(cdG > 199) cdG = 199;
       if(cdG < 0) cdG = 0;
     } 
     else {     
       Serial.println("masuk else...");
       delay(100);
+      
+      // tetapkan nilai durasi RED dan Reset nilai countR
+      cdR = durR - 1;
+      countR = 0;
+      
+      // tetapkan nilai durasi GREEN dan Reset nilai countG
+      cdG = durG - 1;
+      countG = 0;
+      
       baca_pin();
 
       if( bacaIn[1] == 1 ) // lampu kuning padam
@@ -424,8 +437,7 @@ void count_down()
         
         backgroundLayer.fillScreen(BLACK);     
         backgroundLayer.swapBuffers();            
-      }
-      
+      }     
     }
 }
 
