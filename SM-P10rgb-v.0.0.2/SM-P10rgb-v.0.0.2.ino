@@ -82,13 +82,15 @@ unsigned int durG = 25;
 //const char* ssid     = "cd-sg4";
 
 //const char* ssid     = "amp-sg1";
-//const char* ssid     = "amp-sg2";
+const char* ssid     = "amp-sg2";
 //const char* ssid     = "amp-sg3";
-const char* ssid     = "amp-sg4";
+//const char* ssid     = "amp-sg4";
 
 //const char* ssid     = "ub-sg1";
 //const char* ssid     = "ub-sg2";
 //const char* ssid     = "ub-sg3";
+
+//const char* ssid     = "testing";
 
 const char* password = "dishub2022";
 

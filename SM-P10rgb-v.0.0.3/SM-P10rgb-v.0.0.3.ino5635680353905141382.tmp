@@ -1,9 +1,10 @@
 /*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
  *  
  *  mode flashing: pesan HATI-HATI dihilangkan
- *  
- *  untuk simpang kapuas 2
  * 
+ * counter down sampai 0 diganti sampai 1(line 386)
+ * 
+ *  untuk Traffic Ketapang th. 2022
  */
  
 #define USE_ADAFRUIT_GFX_LAYERS
@@ -77,13 +78,26 @@ unsigned int countG = 1;
 unsigned int durG = 25;
 
 //Wi-Fi
-const char* ssid     = "cd-sg1";
+//const char* ssid     = "cd-sg1";
 //const char* ssid     = "cd-sg2";
 //const char* ssid     = "cd-sg3";
 //const char* ssid     = "cd-sg4";
 
 //const char* ssid     = "amp-sg1";
 //const char* ssid     = "amp-sg2";
+//const char* ssid     = "amp-sg3";
+//const char* ssid     = "amp-sg4";
+
+//const char* ssid     = "ub-sg1";
+//const char* ssid     = "ub-sg2";
+//const char* ssid     = "ub-sg3";
+
+//const char* ssid     = "ktp-A-sg1";
+const char* ssid     = "ktp-A-sg2";
+//const char* ssid     = "ktp-A-sg3";
+//const char* ssid     = "ktp-A-sg4";
+
+//const char* ssid     = "testing";
 
 const char* password = "dishub2022";
 
@@ -103,12 +117,15 @@ String header;
 Preferences preferences;
 
 
-void setup() {
+void setup() {  
   pinMode(redPin, INPUT);
   pinMode(yelPin, INPUT);
   pinMode(grePin, INPUT);
 
   Serial.begin(115200);
+  // wait for Serial to be ready
+  delay(50);
+  
   startup_wifi();
   
   matrix.addLayer(&backgroundLayer); 
@@ -145,9 +162,7 @@ void setup() {
 
 void startup_wifi()
 {
-  // wait for Serial to be ready
-  delay(50);
-
+  
   Serial.print("Setting AP (Access Point)...");
   WiFi.softAP(ssid, password);
 
@@ -331,13 +346,110 @@ void loop() {
 
   ms_current = millis();
 
-  if ( ms_current - ms_previous >= 1000)
+  if ( ms_current - ms_previous >= 1000 )
   {
     ms_previous = ms_current;
     Serial.println(ms_current);
-    count_down();
+//    count_down();
+    tes_running_text();
   }  
 }
+
+//=================
+void rambu_stop()
+{
+  backgroundLayer.fillScreen(BLACK);  
+
+  backgroundLayer.drawCircle(32, 16, 15, WHITE);
+  backgroundLayer.drawCircle(32, 16, 14, WHITE);  
+  for (int x = 13; x > 0; x--)
+  {
+    backgroundLayer.drawCircle(32, 16, x, RED);   
+  }
+  
+  
+  
+  
+  for (int x = 25; x <= 39; x++) {    
+    backgroundLayer.drawPixel(x,15,WHITE);  
+    backgroundLayer.drawPixel(x,16,WHITE);  
+    backgroundLayer.drawPixel(x,17,WHITE);  
+  }  
+
+//    backgroundLayer.drawPixel(19,14,RED);  
+//    backgroundLayer.drawPixel(19,15,RED);  
+//    backgroundLayer.drawPixel(19,16,RED);
+//    backgroundLayer.drawPixel(19,17,RED);
+//    backgroundLayer.drawPixel(20,14,RED);  
+//    backgroundLayer.drawPixel(20,15,RED);  
+//    backgroundLayer.drawPixel(20,16,RED);
+//    backgroundLayer.drawPixel(20,17,RED);
+//    backgroundLayer.drawPixel(21,14,RED);  
+//    backgroundLayer.drawPixel(21,15,RED);  
+//    backgroundLayer.drawPixel(21,16,RED);
+//    backgroundLayer.drawPixel(21,17,RED);
+      
+
+    
+  
+}
+
+void tes_running_text()
+{
+  font_angka();
+
+  running_text_red();
+    for(int x = 5; x > -10; x--){      
+      if (x > 0) {
+        count_down_red(x);              
+      } else {
+//        backgroundLayer.fillScreen(BLACK);    
+//        backgroundLayer.setTextSize(2);
+//        backgroundLayer.setFont(gohufont11b);
+//        backgroundLayer.setRotation(0);    
+//        backgroundLayer.setTextColor(RED);
+//        backgroundLayer.setCursor(9 , 23);
+//        backgroundLayer.print("STOP");                
+          rambu_stop();
+      }
+      backgroundLayer.swapBuffers();    
+      delay(1000); 
+      
+          
+   }
+
+    running_text_none();
+    teks_hati_hati();
+    backgroundLayer.swapBuffers();
+    delay(2000);
+
+    font_angka();
+
+    running_text_green(); 
+    for(int x = 5; x > -5; x--){         
+      if (x > 0){            
+        count_down_green(x);
+      } else {
+        backgroundLayer.fillScreen(BLACK);    
+        backgroundLayer.setTextSize(2);
+        backgroundLayer.setFont(gohufont11b);
+        backgroundLayer.setRotation(0);    
+        backgroundLayer.setTextColor(GREEN);
+        backgroundLayer.setCursor(9 , 23);
+        backgroundLayer.print("====");          
+      }
+      backgroundLayer.swapBuffers();
+      delay(1000);
+    }
+
+    running_text_none();
+    teks_hati_hati();
+    backgroundLayer.swapBuffers();
+    delay(2000);
+   
+  
+}
+//=================
 
 void count_down()
 {
@@ -370,7 +482,8 @@ void count_down()
       backgroundLayer.swapBuffers();
 
       cdR--;
-      if (cdR < 0) cdR = 0;
+      if (cdR > 199) cdR = 199;
+      if (cdR < 1) cdR = 1;
     } 
     else if(bacaIn[1] == 0) // yellow
     {
@@ -386,12 +499,13 @@ void count_down()
       if ( hatiOn == false ) hatiOn = true; 
       
       if ( countG == 0 ) runTeks = 0;   //  agar running teks berpindah dari merah ke hijau
-                                      //  ada kasus traffic light hijau tapi running teks merah
+                                        //  ada kasus traffic light hijau tapi running teks merah
       font_angka();
       
       countG++;
       durG = countG;
-      
+
+      // tetapkan nilai durasi RED dan Reset nilai countR      
       cdR = durR - 1;
       countR = 0;
 
@@ -404,11 +518,21 @@ void count_down()
       backgroundLayer.swapBuffers();
 
       cdG--;
-      if(cdG < 0) cdG = 0;
+      if(cdG > 199) cdG = 199;
+      if(cdG < 1) cdG = 1;
     } 
     else {     
       Serial.println("masuk else...");
       delay(100);
+      
+      // tetapkan nilai durasi RED dan Reset nilai countR
+      cdR = durR - 1;
+      countR = 0;
+      
+      // tetapkan nilai durasi GREEN dan Reset nilai countG
+      cdG = durG - 1;
+      countG = 0;
+      
       baca_pin();
 
       if( bacaIn[1] == 1 ) // lampu kuning padam
@@ -419,8 +543,7 @@ void count_down()
         
         backgroundLayer.fillScreen(BLACK);     
         backgroundLayer.swapBuffers();            
-      }
-      
+      }     
     }
 }
 

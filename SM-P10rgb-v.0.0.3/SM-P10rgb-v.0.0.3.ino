@@ -1,9 +1,15 @@
 /*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
  *  
  *  mode flashing: pesan HATI-HATI dihilangkan
- *  
- *  untuk simpang kapuas 2
  * 
+ *  counter down sampai 0 diganti sampai 1(line 386)
+ * 
+ *  untuk Traffic Ketapang th. 2022
+ *  
+ *  tambah logo rambu tanda berhenti dan tanda jalan terus
+ *  dimunculkan ketika counterdown masih belajar hitungan
+ *  
+ *  
  */
  
 #define USE_ADAFRUIT_GFX_LAYERS
@@ -60,8 +66,8 @@ int bacaIn[3];
 
 int cdRY = 3;
 int cdY = 3;
-int cdR = 80;
-int cdG = 25;
+int cdR = 110;
+int cdG = 30;
 
 bool runTeks = 0;
 bool hatiOn = false;
@@ -74,16 +80,29 @@ unsigned int durR = 120;
 unsigned int countY = 1;
 unsigned int durY = 1;
 unsigned int countG = 1;
-unsigned int durG = 25;
+unsigned int durG = 30;
 
 //Wi-Fi
-const char* ssid     = "cd-sg1";
+//const char* ssid     = "cd-sg1";
 //const char* ssid     = "cd-sg2";
 //const char* ssid     = "cd-sg3";
 //const char* ssid     = "cd-sg4";
 
 //const char* ssid     = "amp-sg1";
 //const char* ssid     = "amp-sg2";
+const char* ssid     = "amp-sg3";
+//const char* ssid     = "amp-sg4";
+
+//const char* ssid     = "ub-sg1";
+//const char* ssid     = "ub-sg2";
+//const char* ssid     = "ub-sg3";
+
+//const char* ssid     = "ktp-A-sg1";
+//const char* ssid     = "ktp-A-sg2";
+//const char* ssid     = "ktp-A-sg3";
+//const char* ssid     = "ktp-A-sg4";
+
+//const char* ssid     = "testing";
 
 const char* password = "dishub2022";
 
@@ -103,18 +122,23 @@ String header;
 Preferences preferences;
 
 
-void setup() {
+void setup() {  
   pinMode(redPin, INPUT);
   pinMode(yelPin, INPUT);
   pinMode(grePin, INPUT);
 
   Serial.begin(115200);
+  // wait for Serial to be ready
+  delay(50);
+  
   startup_wifi();
   
   matrix.addLayer(&backgroundLayer); 
   matrix.addLayer(&scrollingLayer); 
   matrix.begin();
-  matrix.setBrightness(200); //max = 255
+  matrix.setBrightness(178); //max = 255
+//  matrix.setBrightness(200); //max = 255
+//  matrix.setBrightness(255); //max = 255
 
   backgroundLayer.drawPixel(1,1, {0xff, 0, 0});
   backgroundLayer.swapBuffers();
@@ -145,9 +169,7 @@ void setup() {
 
 void startup_wifi()
 {
-  // wait for Serial to be ready
-  delay(50);
-
+  
   Serial.print("Setting AP (Access Point)...");
   WiFi.softAP(ssid, password);
 
@@ -331,13 +353,96 @@ void loop() {
 
   ms_current = millis();
 
-  if ( ms_current - ms_previous >= 1000)
+  if ( ms_current - ms_previous >= 1000 )
   {
     ms_previous = ms_current;
     Serial.println(ms_current);
     count_down();
+//    tes_running_text();
   }  
 }
+
+//=================
+void rambu_stop()
+{
+  backgroundLayer.fillScreen(BLACK);  
+
+  backgroundLayer.fillCircle(32, 16, 16, WHITE);
+  backgroundLayer.fillCircle(32, 16, 13, RED);
+  
+  for (int x = 22; x <= 42; x++) {    
+    backgroundLayer.drawPixel(x,15,WHITE);  
+    backgroundLayer.drawPixel(x,16,WHITE);  
+    backgroundLayer.drawPixel(x,17,WHITE);  
+    backgroundLayer.drawPixel(x,18,WHITE);
+  }    
+}
+
+void rambu_jalan()
+{
+  backgroundLayer.fillScreen(BLACK);  
+
+  backgroundLayer.fillCircle(32, 16, 16, WHITE);
+  backgroundLayer.fillCircle(32, 16, 13, BLUE);
+
+  for(int y = 5; y <= 17; y++){
+    for (int x = 0; x <= y - 5; x++){
+      backgroundLayer.drawPixel(32,y,WHITE);
+      backgroundLayer.drawPixel(32 + x ,y,WHITE);
+      backgroundLayer.drawPixel(32 - x ,y,WHITE);
+    }      
+  }
+  
+  for (int x = 27; x <= 37; x++) {    
+    for (int y = 18; y <= 27; y++){
+      backgroundLayer.drawPixel(x,y,WHITE);    
+    }     
+  }    
+}
+
+void tes_running_text()
+{
+  font_angka();
+
+  running_text_red();
+    for(int x = 120; x > -10; x--){      
+      if (x > 0) {
+        count_down_red(x);              
+      } else {               
+          rambu_stop();
+      }
+      backgroundLayer.swapBuffers();    
+      delay(1000); 
+      
+          
+   }
+
+    running_text_none();
+    teks_hati_hati();
+    backgroundLayer.swapBuffers();
+    delay(2000);
+
+    font_angka();
+
+    running_text_green(); 
+    for(int x = 23; x > -10; x--){         
+      if (x > 0){            
+        count_down_green(x);
+      } else {
+        rambu_jalan();          
+      }
+      backgroundLayer.swapBuffers();
+      delay(1000);
+    }
+
+    running_text_none();
+    teks_hati_hati();
+    backgroundLayer.swapBuffers();
+    delay(2000);
+   
+  
+}
+//=================
 
 void count_down()
 {
@@ -358,7 +463,8 @@ void count_down()
       countR++;
       durR = countR;
   
-      cdG = durG - 1;
+//      cdG = durG - 1;
+      cdG = durG;
       countG = 0;
 
       if ( runTeks == 0 ) {
@@ -367,10 +473,13 @@ void count_down()
       }
 
       count_down_red(cdR);
+      if (cdR == 0) count_down_red(1);;
+      if (cdR < 0) rambu_stop();
       backgroundLayer.swapBuffers();
 
       cdR--;
-      if (cdR < 0) cdR = 0;
+      if (cdR > 199) cdR = 199;
+//      if (cdR < 1) cdR = 1;
     } 
     else if(bacaIn[1] == 0) // yellow
     {
@@ -386,13 +495,15 @@ void count_down()
       if ( hatiOn == false ) hatiOn = true; 
       
       if ( countG == 0 ) runTeks = 0;   //  agar running teks berpindah dari merah ke hijau
-                                      //  ada kasus traffic light hijau tapi running teks merah
+                                        //  ada kasus traffic light hijau tapi running teks merah
       font_angka();
       
       countG++;
       durG = countG;
-      
-      cdR = durR - 1;
+
+      // tetapkan nilai durasi RED dan Reset nilai countR      
+//      cdR = durR - 1;
+      cdR = durR;
       countR = 0;
 
       if ( runTeks == 0 ) {
@@ -401,14 +512,28 @@ void count_down()
       }
 
       count_down_green(cdG);
+      if(cdG == 0) count_down_green(1);
+      if(cdG < 0) rambu_jalan();
       backgroundLayer.swapBuffers();
 
       cdG--;
-      if(cdG < 0) cdG = 0;
+      if(cdG > 199) cdG = 199;
+//      if(cdG < 1) cdG = 1;
     } 
     else {     
       Serial.println("masuk else...");
       delay(100);
+      
+      // tetapkan nilai durasi RED dan Reset nilai countR
+      cdR = durR - 1;
+//      cdR = durR;
+      countR = 0;
+      
+      // tetapkan nilai durasi GREEN dan Reset nilai countG
+//      cdG = durG - 1;
+      cdG = durG;
+      countG = 0;
+      
       baca_pin();
 
       if( bacaIn[1] == 1 ) // lampu kuning padam
@@ -419,8 +544,7 @@ void count_down()
         
         backgroundLayer.fillScreen(BLACK);     
         backgroundLayer.swapBuffers();            
-      }
-      
+      }     
     }
 }
 
