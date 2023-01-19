@@ -9,8 +9,12 @@
  *  tambah logo rambu tanda berhenti dan tanda jalan terus
  *  dimunculkan ketika counterdown masih belajar hitungan
  *  
+ *  05/01/2023 -- tambahkan WDT untuk mengatasi hang
  *  
  */
+
+#include <esp_task_wdt.h>
+#define WDT_TIMEOUT 10
  
 #define USE_ADAFRUIT_GFX_LAYERS
 
@@ -130,14 +134,17 @@ void setup() {
   Serial.begin(115200);
   // wait for Serial to be ready
   delay(50);
+
+  esp_task_wdt_init(WDT_TIMEOUT, true); // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL); // add current thread to WDT watch
   
   startup_wifi();
   
   matrix.addLayer(&backgroundLayer); 
   matrix.addLayer(&scrollingLayer); 
   matrix.begin();
-  matrix.setBrightness(178); //max = 255
-//  matrix.setBrightness(200); //max = 255
+//  matrix.setBrightness(178); // 70% ; max = 255
+  matrix.setBrightness(200); // 80% ; max = 255
 //  matrix.setBrightness(255); //max = 255
 
   backgroundLayer.drawPixel(1,1, {0xff, 0, 0});
@@ -358,6 +365,7 @@ void loop() {
     ms_previous = ms_current;
     Serial.println(ms_current);
     count_down();
+    esp_task_wdt_reset();
 //    tes_running_text();
   }  
 }

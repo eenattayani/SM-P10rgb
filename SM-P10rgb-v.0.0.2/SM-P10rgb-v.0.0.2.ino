@@ -3,8 +3,14 @@
  *  mode flashing: pesan HATI-HATI dihilangkan
  * 
  *  untuk simpang Ampera dan Uray Bawadi th. 2022
+ *  
+ *  05/01/2023 -- tambahkan WDT untuk mengatasi hang
+ *  
  */
- 
+
+#include <esp_task_wdt.h>
+#define WDT_TIMEOUT 3
+
 #define USE_ADAFRUIT_GFX_LAYERS
 
 #include <MatrixHardware_ESP32_V0.h>                // This file contains multiple ESP32 hardware configurations, edit the file to define GPIOPINOUT (or add #define GPIOPINOUT with a hardcoded number before this #include)
@@ -82,9 +88,9 @@ unsigned int durG = 25;
 //const char* ssid     = "cd-sg4";
 
 //const char* ssid     = "amp-sg1";
-const char* ssid     = "amp-sg2";
+//const char* ssid     = "amp-sg2";
 //const char* ssid     = "amp-sg3";
-//const char* ssid     = "amp-sg4";
+const char* ssid     = "amp-sg4";
 
 //const char* ssid     = "ub-sg1";
 //const char* ssid     = "ub-sg2";
@@ -118,13 +124,18 @@ void setup() {
   Serial.begin(115200);
   // wait for Serial to be ready
   delay(50);
+
+  esp_task_wdt_init(WDT_TIMEOUT, true); // enable panic so esp32 restarts
+  esp_task_wdt_add(NULL); // add current thread to WDT watch
   
   startup_wifi();
   
   matrix.addLayer(&backgroundLayer); 
   matrix.addLayer(&scrollingLayer); 
   matrix.begin();
-  matrix.setBrightness(200); //max = 255
+  matrix.setBrightness(178); // 70% ; max = 255
+  //  matrix.setBrightness(200); // 80% ; max = 255
+  //  matrix.setBrightness(255); //max = 255
 
   backgroundLayer.drawPixel(1,1, {0xff, 0, 0});
   backgroundLayer.swapBuffers();
@@ -182,6 +193,8 @@ void loop() {
         ms_previous = ms_current;
         Serial.println(ms_current);
         count_down();
+        
+        esp_task_wdt_reset();
 
         Serial.println("in while");
         counterWIFI++;
@@ -344,6 +357,7 @@ void loop() {
     ms_previous = ms_current;
     Serial.println(ms_current);
     count_down();
+    esp_task_wdt_reset();
   }  
 }
 
