@@ -1,0 +1,42 @@
+===================
+# SM-P10rgb-v.0.0.1
+=================== 
+- penerapan untuk simpang kapuas 2
+
+
+
+===================
+# SM-P10rgb-v.0.0.2
+===================
+- penerapan simpang ampera dan uray bawadi th. 2022
+
+05/01/2023
+- tambahkan WDT untuk mengatasi hang 
+- pengaturan brightness menjadi 70%
+  
+08/03/2023
+- speed red ditambah menjadi 60
+
+- penerapan untuk simpang kapuas 2 SG1, SG2, SG3(brightness 70%)
+
+
+
+==================
+# SM-P10rgb-v0.0.3
+==================
+- penerapan untuk Traffic Ketapang th. 2022
+- tambah logo rambu tanda berhenti dan jalan terus
+- kendala: daya listrik besar ketika logo muncul
+
+
+==================
+# SM-P10rgb-v1.0.0
+==================
+- penambahan fitur ubah brightness
+- penambahan fitur ubah speed teks
+ 
+ ==================
+# SM-P10rgb-v2.0.0
+===================
+- dirancang dalam mode client untuk pengaturan teks secara online
+-  ESP berfungsi sebagai client(untuk online) sekaligus sebagai AP(untuk local)

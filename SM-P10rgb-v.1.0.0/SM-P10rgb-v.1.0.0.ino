@@ -1,4 +1,4 @@
-/*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
+ /*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
  *  
  *  mode flashing: pesan HATI-HATI dihilangkan
  * 
@@ -9,6 +9,11 @@
  *             -- pengaturan brightness menjadi 70%
  *             
  *  08/03/2023 -- speed red ditambah menjadi 60
+ *  
+ *  10/03/2025 --  betulkan nama CD di tampilan web (variabel ssid)
+ *  
+ *  next: - pengaturan lewat aplikasi: brightness, speed Red, speed Green
+ *  
  */
 
 #include <esp_task_wdt.h>
@@ -92,37 +97,63 @@ unsigned int durG = 25;
 
 //const char* ssid     = "kap-sg1";
 //const char* ssid     = "kap-sg2";
-const char* ssid     = "kap-sg3";
+//const char* ssid     = "kap-sg3";
 //const char* ssid     = "kap-sg4";
 
 //const char* ssid     = "amp-sg1";
 //const char* ssid     = "amp-sg2";
 //const char* ssid     = "amp-sg3";
-//const char* ssid     = "amp-sg4";
+//const char* ssid     = "amp-sg4-1.0.011024";
+//const char* ssid     = "cd.1.0-amp-sg1";
+//const char* ssid     = "cd.1.0-amp-sg4";
 
 //const char* ssid     = "ub-sg1";
 //const char* ssid     = "ub-sg2";
-//const char* ssid     = "ub-sg3";
+//const char* ssid     = "ub-sg3-2025";
 
-//const char* ssid     = "testing";
+//const char* ssid     = "cd-2024-1a";
+//const char* ssid     = "cd-2024-1b";
+//const char* ssid     = "cd-2024-1c";
+//const char* ssid     = "cd-2024-1d";
+//const char* ssid     = "cd-2024-1e";
 
-const char* password = "dishub2022";
+//const char* ssid     = "cd-2025-garuda";
+//const char* ssid     = "cd-2025-1a";
+
+//const char* ssid     = "cd.sbs.a1";
+//const char* ssid     = "cd.sbs.a2";
+//const char* ssid     = "cd.sbs.a3";
+
+//const char* ssid     = "cd.sbs.b1";
+//const char* ssid     = "cd.sbs.b2";
+//const char* ssid     = "cd.sbs.b3";
+
+const char* ssid     = "testing";
+//const char* ssid     = "cd-empat";
+//const char* password = "dishub2022";
+//const char* password = "dishub2024";
+const char* password = "dishub2025";
 
 char teksRed1[60] = "SILAHKAN BERHENTI DI BELAKANG ZEBRA CROSS"; 
 char teksRed2[60] = "PATUHI RAMBU LALU LINTAS"; 
-char teksRed3[60] = "JAGA KESELAMATAN BERLALULINTAS"; 
+char teksRed3[60] = "JAGA KESELAMATAN BERLALU LINTAS"; 
 char teksRed[180];
 char teksGreen[60] = "SILAHKAN LANJUTKAN PERJALANAN ANDA"; 
 
+int speedRed = 60;
+int speedGreen = 80;
+int bright = 153;
+
 String strTeksRed;
+
 String memInfoSatu, memInfoDua, memInfoTiga, memInfoGreen;
+int mSpeedRed, mSpeedGreen, mBright;
 
 WiFiServer server(80);
 String header;
 
 // Preferences /EEPROM
 Preferences preferences;
-
 
 void setup() {
   pinMode(redPin, INPUT);
@@ -141,11 +172,7 @@ void setup() {
   matrix.addLayer(&backgroundLayer); 
   matrix.addLayer(&scrollingLayer); 
   matrix.begin();
-//  matrix.setBrightness(153); // 60% ; max = 255
-  matrix.setBrightness(178); // 70% ; max = 255
-  //  matrix.setBrightness(200); // 80% ; max = 255
-  //  matrix.setBrightness(255); //max = 255
-
+  
   backgroundLayer.drawPixel(1,1, {0xff, 0, 0});
   backgroundLayer.swapBuffers();
 
@@ -160,6 +187,10 @@ void setup() {
   memInfoDua = preferences.getString("infodua", String(teksRed2));
   memInfoTiga = preferences.getString("infotiga", String(teksRed3));
   memInfoGreen = preferences.getString("infogreen", String(teksGreen));
+
+  mSpeedRed = preferences.getInt("speedRed" , speedRed);
+  mSpeedGreen = preferences.getInt("speedGreen" , speedGreen);
+  mBright = preferences.getInt("bright" , bright);
   
   memInfoSatu.toCharArray(teksRed1, 60);
   memInfoDua.toCharArray(teksRed2, 60);
@@ -170,6 +201,16 @@ void setup() {
                String(teksRed2)+ "          " + 
                String(teksRed3);
   strTeksRed.toCharArray(teksRed, strTeksRed.length() + 1);
+
+  speedRed = mSpeedRed;
+  speedGreen = mSpeedGreen;
+  bright = mBright;
+  matrix.setBrightness(bright); 
+  //  matrix.setBrightness(153); // 60% ; max = 255
+  //  matrix.setBrightness(178); // 70% ; max = 255
+  //  matrix.setBrightness(200); // 80% ; max = 255
+  //  matrix.setBrightness(255); //max = 255
+
   
 }
 
@@ -197,7 +238,7 @@ void loop() {
       
       ms_current = millis();
 
-      if ( ms_current - ms_previous >= 1000 )
+      if ( ms_current - ms_previous >= 1000)
       {
         ms_previous = ms_current;
         Serial.println(ms_current);
@@ -239,7 +280,10 @@ void loop() {
               String teksInfo1 = teksFromWeb.substring(teksFromWeb.indexOf("info1=") + 6 , teksFromWeb.indexOf("&info2="));
               String teksInfo2 = teksFromWeb.substring(teksFromWeb.indexOf("info2=") + 6 , teksFromWeb.indexOf("&info3="));
               String teksInfo3 = teksFromWeb.substring(teksFromWeb.indexOf("info3=") + 6 , teksFromWeb.indexOf("&infoG="));
-              String teksInfoG = teksFromWeb.substring(teksFromWeb.indexOf("infoG=") + 6 , iEnd);
+              String teksInfoG = teksFromWeb.substring(teksFromWeb.indexOf("infoG=") + 6 , teksFromWeb.indexOf("&red="));
+              String teksSpeedRed = teksFromWeb.substring(teksFromWeb.indexOf("red=") + 4 , teksFromWeb.indexOf("&gre="));
+              String teksSpeedGreen = teksFromWeb.substring(teksFromWeb.indexOf("gre=") + 4 , teksFromWeb.indexOf("&bri="));
+              String teksBright = teksFromWeb.substring(teksFromWeb.indexOf("bri=") + 4 , iEnd);
            
               for(int i = 0; i < teksInfo1.length(); i++ ){
                 if (teksInfo1[i] == '+') teksInfo1[i] = ' ';
@@ -262,20 +306,42 @@ void loop() {
               preferences.putString("infosatu", String(teksInfo1));
               preferences.putString("infodua", String(teksInfo2));
               preferences.putString("infotiga", String(teksInfo3));
-              preferences.putString("infogreen", String(teksInfoG));                           
-
+              preferences.putString("infogreen", String(teksInfoG));    
+                             
               teksInfo1.toCharArray(teksRed1, 60); 
               teksInfo2.toCharArray(teksRed2, 60);
               teksInfo3.toCharArray(teksRed3, 60);
               teksInfoG.toCharArray(teksGreen, 60);
               strTeksRed = String(teksRed1)+ "          " + String(teksRed2)+ "          " + String(teksRed3);              
               strTeksRed.toCharArray(teksRed, strTeksRed.length() + 1);   
+                                 
+
+              preferences.putInt("speedRed" , teksSpeedRed.toInt());
+              preferences.putInt("speedGreen" , teksSpeedGreen.toInt());
+              preferences.putInt("bright" , teksBright.toInt());
+
+              speedRed = teksSpeedRed.toInt();
+              speedGreen = teksSpeedGreen.toInt();
+              bright = teksBright.toInt();
+
+              matrix.setBrightness(bright);
+
+              bacaIn[0] = digitalRead(redPin);
+              bacaIn[1] = digitalRead(yelPin);
+              bacaIn[2] = digitalRead(grePin);
+              
+              if ( bacaIn[0] == 0 ){ scrollingLayer.setSpeed(speedRed); }
+              else if ( bacaIn[2] == 0 ) { scrollingLayer.setSpeed(speedGreen); }
               
               teksInfo1 = "";
               teksInfo2 = "";
               teksInfo3 = "";
               teksInfoG = "";
-              strTeksRed = "";         
+              strTeksRed = "";
+              teksSpeedRed = "";
+              teksSpeedGreen = "";
+              teksBright = "";
+              
               
             } else if (header.indexOf("cdGreen") >= 0) {
               Serial.println("set counterdown hijau");
@@ -296,41 +362,110 @@ void loop() {
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-            client.println("<link rel=\"icon\" href=\"data:,\">");
+            client.println("  <link rel=\"icon\" href=\"data:,\">");
             // CSS to style the on/off buttons 
             // Feel free to change the background-color and font-size attributes to fit your preferences
-            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-            client.println("h5 {text-align: center;}");
-            client.println(".button { border-radius: 8px; background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-            client.println("text-decoration: none; font-size: 18px; margin: 2px; cursor: pointer;}");
-            client.println(".button1 {background-color: #FF1111;}");
-            client.println(".button2 {background-color: #555555;}");
-            client.println("input { border-radius: 8px; background-color: #eee; width: 95%; padding: 10px;}");
-            client.println("</style></head>");
+            client.println("  <style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+            client.println("    h5 {text-align: center;}");
+            client.println("    .button { border-radius: 8px; background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+            client.println("    text-decoration: none; font-size: 18px; margin: 2px; cursor: pointer;}");
+            client.println("    .button1 {background-color: #FF1111;}");
+            client.println("    .button2 {background-color: #555555;}");
+            client.println("    input { border-radius: 8px; background-color: #eee; width: 95%; padding: 10px;}");
+            client.println("    input.range { line-height: 30px; text-align: center; font-size: 14px; font-weight: bold; padding: 0; }  ");            
+            client.println("    .table {width: 100%; display: flex; justify-content: center; align-items: center;}  ");
+            client.println("    table {border-spacing: 10px; text-transform: uppercase;}  ");           
+            client.println("  </style> ");
+            client.println("</head>");
+          
             
             // Web Page Heading
-            client.println("<body><h1>Counter Down 1</h1>");
-            client.println("<hr>");                                 
-                       
-            client.println("<p><h4>Running Text Merah</h4></p>");
-            client.println("<form method=\"GET\" action=\"/cdRedGreen\">");
-            client.println("  <p><h5>Info 1</h5></p>");
-            client.println("  <input type=\"text\" name=\"info1\" value=\"" + String(teksRed1) + "\" maxlength=\"59\">");  
-            client.println("  <p><h5>Info 2</h5></p>");
-            client.println("  <input type=\"text\" name=\"info2\" value=\"" + String(teksRed2) + "\" maxlength=\"59\">");  
-            client.println("  <p><h5>Info 3</h5></p>");
-            client.println("  <input type=\"text\" name=\"info3\" value=\"" + String(teksRed3) + "\" maxlength=\"59\">");  
-            
-            client.println("  <br><br>");                                 
+            client.println("<body>  ");
+            client.println("  <h1>Counter Down " + String(ssid) + "</h1>  ");
             client.println("  <hr>");                                 
+                       
+            client.println("  <p><h4>Running Text Merah</h4></p>");
+            client.println("  <form method=\"GET\" action=\"/cdRedGreen\">");
+            client.println("    <p><h5>Info 1</h5></p>");
+            client.println("    <input type=\"text\" name=\"info1\" value=\"" + String(teksRed1) + "\" maxlength=\"59\">");  
+            client.println("    <p><h5>Info 2</h5></p>");
+            client.println("    <input type=\"text\" name=\"info2\" value=\"" + String(teksRed2) + "\" maxlength=\"59\">");  
+            client.println("    <p><h5>Info 3</h5></p>");
+            client.println("    <input type=\"text\" name=\"info3\" value=\"" + String(teksRed3) + "\" maxlength=\"59\">");  
+            
+            client.println("    <br><br>");                                 
+            client.println("    <hr>");                                 
 
-            client.println("<p><h4>Running Text Hijau</h4></p>");
-            client.println("  <input type=\"text\" name=\"infoG\" value=\"" + String(teksGreen) + "\" maxlength=\"59\">");     
+            client.println("    <p><h4>Running Text Hijau</h4></p>");
+            client.println("    <input type=\"te  xt\" name=\"infoG\" value=\"" + String(teksGreen) + "\" maxlength=\"59\">  ");     
+
+            client.println("    <div class=\"table\">  ");
+            client.println("    <table>  ");
+            client.println("      <thead></thead>  ");
+            client.println("      <tbody>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>speed red</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"red\" type=\"range\" min=\"10\" max=\"100\" /></td>  ");
+            client.println("          <td><input class=\"range\" name=\"red\" type=\"number\" id=\"valSpeedRed\" min=\"10\" max=\"100\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>speed green</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"green\" type=\"range\" min=\"10\" max=\"100\" /></td>  ");
+            client.println("          <td><input class=\"range\" name=\"gre\" type=\"number\" id=\"valSpeedGreen\" min=\"10\" max=\"100\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>brightness</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"bright\" type=\"range\" min=\"50\" max=\"200\" /></td>  ");
+            client.println("          <td><input class=\"range\" name=\"bri\" type=\"number\" id=\"valBright\" min=\"50\" max=\"200\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("      </tbody>  ");
+            client.println("    </table>  ");
+            client.println("    </div>  ");
                         
             client.println("  <p><button class=\"button\">Simpan</button></p>");
-            client.println("</form>");
+            client.println("</form>");                       
             
-                        
+            client.println("<script>  ");
+            client.println("    const speedRedRange = document.querySelector(\"#red\");  ");
+            client.println("    const speedGreenRange = document.querySelector(\"#green\");  ");
+            client.println("    const bright = document.querySelector(\"#bright\");  ");
+          
+            client.println("    const valSpeedRed = document.querySelector(\"#valSpeedRed\");  ");
+            client.println("    const valSpeedGreen = document.querySelector(\"#valSpeedGreen\");  ");
+            client.println("    const valBright = document.querySelector(\"#valBright\");  ");
+          
+            client.println("    speedRedRange.value = " + String(speedRed) + ";  ");
+            client.println("    valSpeedRed.value = " + String(speedRed) + ";  ");
+            client.println("    speedGreenRange.value = " + String(speedGreen) + ";  ");
+            client.println("    valSpeedGreen.value = " + String(speedGreen) + ";  ");
+            client.println("    bright.value = " + String(bright) + ";  ");
+            client.println("    valBright.value = " + String(bright) + ";  ");
+          
+            client.println("    speedRedRange.addEventListener(\"input\", () => {  ");
+            client.println("      valSpeedRed.value = speedRedRange.value; });  ");
+          
+            client.println("    speedGreenRange.addEventListener(\"input\", () => {  ");
+            client.println("      valSpeedGreen.value = speedGreenRange.value; });  ");
+          
+            client.println("    bright.addEventListener(\"input\", () => { ");
+            client.println("      valBright.value = bright.value; });  ");
+          
+            client.println("    valSpeedRed.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valSpeedRed.value > 100 ) { valSpeedRed.value = 100; }  ");
+            client.println("      if ( valSpeedRed.value < 10 ) { valSpeedGRed.value = 10; }  ");  
+            client.println("      speedRedRange.value = valSpeedRed.value; });  ");
+          
+            client.println("    valSpeedGreen.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valSpeedGreen.value > 100 ) { valSpeedGreen.value = 100; }  ");
+            client.println("      if ( valSpeedGreen.value < 10 ) { valSpeedGreen.value = 10; }  ");            
+            client.println("      speedGreenRange.value = valSpeedGreen.value;  ");
+            client.println("    });  ");
+          
+            client.println("    valBright.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valBright.value > 200 ) { valBright.value = 200; }  ");
+            client.println("      if ( valBright.value < 50 ) { valBright.value = 50; }  ");
+            client.println("      bright.value = valBright.value; });  ");
+            client.println("  </script>  ");
             client.println("</body></html>");
             
             // The HTTP response ends with another blank line
@@ -539,7 +674,9 @@ void running_text_red()
 {
   scrollingLayer.setMode(wrapForward);
   scrollingLayer.setColor({0xff, 0, 0});
-  scrollingLayer.setSpeed(60);
+  scrollingLayer.setSpeed(speedRed);
+  Serial.print("speed red: ");
+  Serial.println(speedRed);
   scrollingLayer.setTextSize(1);
   scrollingLayer.setFont(&URW_Gothic_L_Demi_20);
   scrollingLayer.setOffsetFromTop(kMatrixHeight - 15);
@@ -550,7 +687,9 @@ void running_text_green()
 {
   scrollingLayer.setMode(wrapForward);
   scrollingLayer.setColor({0, 0xff, 0});
-  scrollingLayer.setSpeed(80);
+  scrollingLayer.setSpeed(speedGreen);
+  Serial.print("speed green: ");
+  Serial.println(speedGreen);
   scrollingLayer.setTextSize(1);
   scrollingLayer.setFont(&URW_Gothic_L_Demi_20);
   scrollingLayer.setOffsetFromTop(kMatrixHeight - 15);
@@ -563,7 +702,7 @@ void running_text_none()
   
   scrollingLayer.setMode(wrapForward);
   scrollingLayer.setColor({0, 0, 0});
-  scrollingLayer.setSpeed(40);
+  scrollingLayer.setSpeed(speedRed);
   scrollingLayer.setFont(gohufont11b);
   scrollingLayer.setOffsetFromTop(kMatrixHeight - 12);
   scrollingLayer.start("", 0);  

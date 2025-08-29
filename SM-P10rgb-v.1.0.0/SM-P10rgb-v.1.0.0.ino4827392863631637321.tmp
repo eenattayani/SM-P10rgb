@@ -1,4 +1,4 @@
-/*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
+ /*  counter down untuk traffic light dengan input MERAH, KUNING, HIJAU, 12V
  *  
  *  mode flashing: pesan HATI-HATI dihilangkan
  * 
@@ -9,6 +9,8 @@
  *             -- pengaturan brightness menjadi 70%
  *             
  *  08/03/2023 -- speed red ditambah menjadi 60
+ *  
+ *  next: - pengaturan lewat aplikasi: brightness, speed Red, speed Green
  */
 
 #include <esp_task_wdt.h>
@@ -92,7 +94,7 @@ unsigned int durG = 25;
 
 //const char* ssid     = "kap-sg1";
 //const char* ssid     = "kap-sg2";
-const char* ssid     = "kap-sg3";
+//const char* ssid     = "kap-sg3";
 //const char* ssid     = "kap-sg4";
 
 //const char* ssid     = "amp-sg1";
@@ -104,9 +106,9 @@ const char* ssid     = "kap-sg3";
 //const char* ssid     = "ub-sg2";
 //const char* ssid     = "ub-sg3";
 
-//const char* ssid     = "testing";
+const char* ssid     = "testing";
 
-const char* password = "dishub2022";
+const char* password = "dishub2023";
 
 char teksRed1[60] = "SILAHKAN BERHENTI DI BELAKANG ZEBRA CROSS"; 
 char teksRed2[60] = "PATUHI RAMBU LALU LINTAS"; 
@@ -114,15 +116,20 @@ char teksRed3[60] = "JAGA KESELAMATAN BERLALULINTAS";
 char teksRed[180];
 char teksGreen[60] = "SILAHKAN LANJUTKAN PERJALANAN ANDA"; 
 
+unsigned int speedRed = 60;
+unsigned int speedGreen = 80;
+byte bright = 200;
+
 String strTeksRed;
+
 String memInfoSatu, memInfoDua, memInfoTiga, memInfoGreen;
+unsigned int mSpeedRed, mSpeedGreen, mBright;
 
 WiFiServer server(80);
 String header;
 
 // Preferences /EEPROM
 Preferences preferences;
-
 
 void setup() {
   pinMode(redPin, INPUT);
@@ -141,11 +148,7 @@ void setup() {
   matrix.addLayer(&backgroundLayer); 
   matrix.addLayer(&scrollingLayer); 
   matrix.begin();
-//  matrix.setBrightness(153); // 60% ; max = 255
-  matrix.setBrightness(178); // 70% ; max = 255
-  //  matrix.setBrightness(200); // 80% ; max = 255
-  //  matrix.setBrightness(255); //max = 255
-
+  
   backgroundLayer.drawPixel(1,1, {0xff, 0, 0});
   backgroundLayer.swapBuffers();
 
@@ -160,6 +163,10 @@ void setup() {
   memInfoDua = preferences.getString("infodua", String(teksRed2));
   memInfoTiga = preferences.getString("infotiga", String(teksRed3));
   memInfoGreen = preferences.getString("infogreen", String(teksGreen));
+
+  mSpeedRed = preferences.getUInt("speedRed" , speedRed);
+  mSpeedGreen = preferences.getUInt("speedGreen" , speedGreen);
+  mBright = preferences.getUInt("bright" , bright);
   
   memInfoSatu.toCharArray(teksRed1, 60);
   memInfoDua.toCharArray(teksRed2, 60);
@@ -170,6 +177,16 @@ void setup() {
                String(teksRed2)+ "          " + 
                String(teksRed3);
   strTeksRed.toCharArray(teksRed, strTeksRed.length() + 1);
+
+  speedRed = mSpeedRed;
+  speedGreen = mSpeedGreen;
+  bright = mBright;
+  matrix.setBrightness(bright); 
+  //  matrix.setBrightness(153); // 60% ; max = 255
+  //  matrix.setBrightness(178); // 70% ; max = 255
+  //  matrix.setBrightness(200); // 80% ; max = 255
+  //  matrix.setBrightness(255); //max = 255
+
   
 }
 
@@ -197,7 +214,7 @@ void loop() {
       
       ms_current = millis();
 
-      if ( ms_current - ms_previous >= 1000 )
+      if ( ms_current - ms_previous >= 1000)
       {
         ms_previous = ms_current;
         Serial.println(ms_current);
@@ -296,41 +313,110 @@ void loop() {
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-            client.println("<link rel=\"icon\" href=\"data:,\">");
+            client.println("  <link rel=\"icon\" href=\"data:,\">");
             // CSS to style the on/off buttons 
             // Feel free to change the background-color and font-size attributes to fit your preferences
-            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-            client.println("h5 {text-align: center;}");
-            client.println(".button { border-radius: 8px; background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-            client.println("text-decoration: none; font-size: 18px; margin: 2px; cursor: pointer;}");
-            client.println(".button1 {background-color: #FF1111;}");
-            client.println(".button2 {background-color: #555555;}");
-            client.println("input { border-radius: 8px; background-color: #eee; width: 95%; padding: 10px;}");
-            client.println("</style></head>");
+            client.println("  <style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+            client.println("    h5 {text-align: center;}");
+            client.println("    .button { border-radius: 8px; background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+            client.println("    text-decoration: none; font-size: 18px; margin: 2px; cursor: pointer;}");
+            client.println("    .button1 {background-color: #FF1111;}");
+            client.println("    .button2 {background-color: #555555;}");
+            client.println("    input { border-radius: 8px; background-color: #eee; width: 95%; padding: 10px;}");
+            client.println("    input.range { line-height: 30px; text-align: center; font-size: 14px; font-weight: bold; padding: 0; }  ");
+            client.println("    .table {width: 100%; display: flex; justify-content: center; align-items: center;}  ");
+            client.println("    table {border-spacing: 10px; text-transform: uppercase;}  ");           
+            client.println("  </style> ");
+            client.println("</head>");
+          
             
             // Web Page Heading
-            client.println("<body><h1>Counter Down 1</h1>");
-            client.println("<hr>");                                 
-                       
-            client.println("<p><h4>Running Text Merah</h4></p>");
-            client.println("<form method=\"GET\" action=\"/cdRedGreen\">");
-            client.println("  <p><h5>Info 1</h5></p>");
-            client.println("  <input type=\"text\" name=\"info1\" value=\"" + String(teksRed1) + "\" maxlength=\"59\">");  
-            client.println("  <p><h5>Info 2</h5></p>");
-            client.println("  <input type=\"text\" name=\"info2\" value=\"" + String(teksRed2) + "\" maxlength=\"59\">");  
-            client.println("  <p><h5>Info 3</h5></p>");
-            client.println("  <input type=\"text\" name=\"info3\" value=\"" + String(teksRed3) + "\" maxlength=\"59\">");  
-            
-            client.println("  <br><br>");                                 
+            client.println("<body>  ");
+            client.println("  <h1>Counter Down 1</h1>  ");
             client.println("  <hr>");                                 
+                       
+            client.println("  <p><h4>Running Text Merah</h4></p>");
+            client.println("  <form method=\"GET\" action=\"/cdRedGreen\">");
+            client.println("    <p><h5>Info 1</h5></p>");
+            client.println("    <input type=\"text\" name=\"info1\" value=\"" + String(teksRed1) + "\" maxlength=\"59\">");  
+            client.println("    <p><h5>Info 2</h5></p>");
+            client.println("    <input type=\"text\" name=\"info2\" value=\"" + String(teksRed2) + "\" maxlength=\"59\">");  
+            client.println("    <p><h5>Info 3</h5></p>");
+            client.println("    <input type=\"text\" name=\"info3\" value=\"" + String(teksRed3) + "\" maxlength=\"59\">");  
+            
+            client.println("    <br><br>");                                 
+            client.println("    <hr>");                                 
 
-            client.println("<p><h4>Running Text Hijau</h4></p>");
-            client.println("  <input type=\"text\" name=\"infoG\" value=\"" + String(teksGreen) + "\" maxlength=\"59\">");     
+            client.println("    <p><h4>Running Text Hijau</h4></p>");
+            client.println("    <input type=\"te  xt\" name=\"infoG\" value=\"" + String(teksGreen) + "\" maxlength=\"59\">  ");     
+
+            client.println("    <div class=\"table\">  ");
+            client.println("    <table>  ");
+            client.println("      <thead></thead>  ");
+            client.println("      <tbody>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>speed red</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"red\" type=\"range\" min=\"10\" max=\"100\" /></td>  ");
+            client.println("          <td><input class=\"range\" type=\"number\" id=\"valSpeedRed\" min=\"10\" max=\"100\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>speed green</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"green\" type=\"range\" min=\"10\" max=\"100\" /></td>  ");
+            client.println("            <td><input class=\"range\" type=\"number\" id=\"valSpeedGreen\" min=\"10\" max=\"100\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("        <tr>  ");
+            client.println("          <td><label>brightness</label></td>  ");
+            client.println("          <td><input class=\"range\" id=\"bright\" type=\"range\" min=\"50\" max=\"200\" /></td>  ");
+            client.println("          <td><input class=\"range\" type=\"number\" id=\"valBright\" min=\"50\" max=\"200\" required/></td>  ");
+            client.println("        </tr>  ");
+            client.println("      </tbody>  ");
+            client.println("    </table>  ");
+            client.println("    </div>  ");
                         
             client.println("  <p><button class=\"button\">Simpan</button></p>");
-            client.println("</form>");
+            client.println("</form>");                       
             
-                        
+            client.println("<script>  ");
+            client.println("    const speedRedRange = document.querySelector(\"#red\");  ");
+            client.println("    const speedGreenRange = document.querySelector(\"#green\");  ");
+            client.println("    const bright = document.querySelector(\"#bright\");  ");
+          
+            client.println("    const valSpeedRed = document.querySelector(\"#valSpeedRed\");  ");
+            client.println("    const valSpeedGreen = document.querySelector(\"#valSpeedGreen\");  ");
+            client.println("    const valBright = document.querySelector(\"#valBright\");  ");
+          
+            client.println("    speedGreenRange.value = 80;  ");
+            client.println("    valSpeedRed.value = 80;  ");
+            client.println("    speedGreenRange.value = 60;  ");
+            client.println("    valSpeedGreen.value = 60;  ");
+            client.println("    bright.value = " + String(bright) + ";  ");
+            client.println("    valBright.value = " + String(bright) + ";  ");
+          
+            client.println("    speedRedRange.addEventListener(\"input\", () => {  ");
+            client.println("      valSpeedRed.value = speedRedRange.value; });  ");
+          
+            client.println("    speedGreenRange.addEventListener(\"input\", () => {  ");
+            client.println("      valSpeedGreen.value = speedGreenRange.value; });  ");
+          
+            client.println("    bright.addEventListener(\"input\", () => { ");
+            client.println("      valBright.value = bright.value; });  ");
+          
+            client.println("    valSpeedRed.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valSpeedRed.value > 100 ) { valSpeedRed.value = 100; }  ");
+            client.println("      if ( valSpeedRed.value < 10 ) { valSpeedGRed.value = 10; }  ");  
+            client.println("      speedRedRange.value = valSpeedRed.value; });  ");
+          
+            client.println("    valSpeedGreen.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valSpeedGreen.value > 100 ) { valSpeedGreen.value = 100; }  ");
+            client.println("      if ( valSpeedGreen.value < 10 ) { valSpeedGreen.value = 10; }  ");            
+            client.println("      speedGreenRange.value = valSpeedGreen.value;  ");
+            client.println("    });  ");
+          
+            client.println("    valBright.addEventListener(\"input\", () => {  ");
+            client.println("      if ( valBright.value > 200 ) { valBright.value = 200; }  ");
+            client.println("      if ( valBright.value < 50 ) { valBright.value = 50; }  ");
+            client.println("      bright.value = valBright.value; });  ");
+            client.println("  </script>  ");
             client.println("</body></html>");
             
             // The HTTP response ends with another blank line
